@@ -33,19 +33,29 @@
 
 | 작업 | 명령 |
 |---|---|
-| 빌드 | <!-- TBD --> |
-| 테스트 전체 | <!-- TBD --> |
-| 단일 테스트 | <!-- TBD --> |
-| 포맷 검사 / 자동 수정 | <!-- TBD --> |
+| 빌드 | `pnpm build` |
+| 테스트 전체 | `pnpm test` |
+| 단일 테스트 | `pnpm vitest run <파일 경로>` · 이름으로 거를 때 `pnpm vitest run -t '<테스트 이름>'` |
+| 포맷 검사 / 자동 수정 | `pnpm format:check` / `pnpm format` |
+| 린트 | `pnpm lint` |
+| 타입 검사 | `pnpm typecheck` |
+| 개발 서버 | `pnpm dev` |
+| E2E 테스트 | `pnpm test:e2e` — Playwright, `tests/e2e`. 로컬 포트 3100 (`PORT` 로 바꾼다) |
 | 검증 일괄 | `script/run-lint-test.sh` |
 
 자동화 스크립트는 `script/` 에 둔다. 새 스크립트는 `script/README.md` 표에 한 줄 추가한다.
 
 ## 4. 스택
 
-<!-- TBD: 언어·런타임·빌드 도구·포맷터를 한두 줄로 -->
+TypeScript(strict) · Next.js App Router · React. 패키지 매니저는 pnpm(`packageManager` 로 고정),
+스타일은 Tailwind CSS v4, 린트는 ESLint flat config, 포맷은 Prettier, 단위 테스트는 Vitest(jsdom) +
+Testing Library, E2E 는 Playwright.
 
-**정확한 버전과 의존성 목록은 <!-- TBD: 매니페스트 파일명 --> 이 정본이다.**
+- 공통 라이브러리 중 Zustand · react-hook-form · Radix UI · date-fns / date-fns-tz 는 설치만 되어 있고
+  아직 쓰는 코드가 없다
+- E2E 는 설정만 있고 테스트가 없다
+
+**정확한 버전과 의존성 목록은 `package.json` 과 `pnpm-lock.yaml` 이 정본이다.**
 
 ## 5. 아키텍처
 
