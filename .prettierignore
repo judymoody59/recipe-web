@@ -1,0 +1,23 @@
+node_modules
+.next
+out
+build
+coverage
+dist
+pnpm-lock.yaml
+next-env.d.ts
+public
+playwright-report
+test-results
+README.md
+
+# 하네스 파일 — 생성물·관리 파일을 포맷터가 바꾸면 생성물 일치 검사가 깨진다
+.ai
+.claude
+.codex
+.harness
+docs
+script
+harness.toml
+AGENTS.md
+CLAUDE.md

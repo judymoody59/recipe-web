@@ -6,8 +6,12 @@
 
 | 작업 | 명령 |
 |---|---|
-| 빌드 | <!-- TBD --> |
-| 테스트 전체 | <!-- TBD --> |
-| 단일 테스트 | <!-- TBD --> |
-| 포맷 검사 / 자동 수정 | <!-- TBD --> |
+| 빌드 | `pnpm build` |
+| 테스트 전체 | `pnpm test` |
+| 단일 테스트 | `pnpm vitest run <파일 경로>` · 이름으로 거를 때 `pnpm vitest run -t '<테스트 이름>'` |
+| 포맷 검사 / 자동 수정 | `pnpm format:check` / `pnpm format` |
+| 린트 | `pnpm lint` |
+| 타입 검사 | `pnpm typecheck` |
+| 개발 서버 | `pnpm dev` |
+| E2E 테스트 | `pnpm test:e2e` — Playwright, `tests/e2e`. 로컬 포트 3100 (`PORT` 로 바꾼다) |
 | 검증 일괄 | `script/run-lint-test.sh` |
