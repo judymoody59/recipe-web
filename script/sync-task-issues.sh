@@ -85,14 +85,16 @@ for i in range(1, len(parts), 3):
     hit = next((x for x in issues if (x.get("title") or "").strip() == title), None)
     plan.append((tid, title, body.strip(), hit))
 
+# 쓰지 않는 칸은 비우지 않고 `-` 로 채운다. 탭은 공백류라 `read` 가 연속 탭을 구분자
+# 하나로 합치고, 그러면 칸이 한 칸씩 밀려 제목이 본문 파일 자리로 들어간다.
 with open(f"{work}/plan.tsv", "w", encoding="utf-8") as fp:
     for n, (tid, title, body, hit) in enumerate(plan):
         if hit:
-            fp.write("skip\t%s\t%s\t\t%s\n" % (tid, hit["iid"], hit.get("state") or ""))
+            fp.write("skip\t%s\t%s\t-\t%s\n" % (tid, hit["iid"], hit.get("state") or "-"))
             continue
         bodyfile = f"{work}/body-{n}.md"
         open(bodyfile, "w", encoding="utf-8").write(body + "\n")
-        fp.write("create\t%s\t\t%s\t%s\n" % (tid, bodyfile, title))
+        fp.write("create\t%s\t-\t%s\t%s\n" % (tid, bodyfile, title))
 
 print("breakdown tasks: %d  ·  to create: %d"
       % (len(plan), sum(1 for p in plan if not p[3])), file=sys.stderr)
