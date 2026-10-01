@@ -126,10 +126,15 @@ test('시드 계정으로 로그인하면 홈으로 이동하고 저장소가 �
   expect(stored).toEqual([null, null, null, null]);
 });
 
-for (const width of [2560, 1440]) {
+// 1280 은 내용의 가장 넓은 폭(1436)보다 좁은 창이다.
+for (const width of [2560, 1440, 1280]) {
   test(`창 폭 ${width} 에서 로그인 화면의 크기가 같고 가운데에 있다`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1080 });
     await open(page, '/login');
+
+    const logo = await rect(page.getByText('로고', { exact: true }));
+    expect(logo).toMatchObject({ width: 180, height: 58 });
+    expect(logo.x + logo.width / 2).toBe(width / 2);
 
     for (const placeholder of ['아이디', '비밀번호']) {
       const box = await rect(field(page, placeholder));

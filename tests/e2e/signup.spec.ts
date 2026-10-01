@@ -272,7 +272,8 @@ test('이미 있는 아이디로 가입하면 1단계에서 알린다', async ({
   expect(text.y + text.height).toBeLessThanOrEqual(actions.y);
 });
 
-for (const width of [2560, 1440]) {
+// 1280 은 내용의 가장 넓은 폭(1436)보다 좁은 창이다.
+for (const width of [2560, 1440, 1280]) {
   test(`창 폭 ${width} 에서 회원가입 화면의 크기가 같고 가운데에 있다`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1080 });
     await open(page, '/signup');
@@ -282,8 +283,14 @@ for (const width of [2560, 1440]) {
       expect(box).toMatchObject({ width: 600, height: 120 });
       expect(box.x + box.width / 2).toBe(width / 2);
     }
-    expect(await rect(pill(page, '프로필 설정'))).toMatchObject({ width: 273, height: 70 });
-    expect(await rect(button(page, '다음'))).toMatchObject({ width: 200, height: 84 });
+    const middlePill = await rect(pill(page, '프로필 설정'));
+    expect(middlePill).toMatchObject({ width: 273, height: 70 });
+    expect(Math.abs(middlePill.x + middlePill.width / 2 - width / 2)).toBeLessThanOrEqual(1);
+    const cancel = await rect(button(page, '취소'));
+    const next = await rect(button(page, '다음'));
+    expect(cancel).toMatchObject({ width: 200, height: 84 });
+    expect(next).toMatchObject({ width: 200, height: 84 });
+    expect((cancel.x + next.x + next.width) / 2).toBe(width / 2);
   });
 }
 
