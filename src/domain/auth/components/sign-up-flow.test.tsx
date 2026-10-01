@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { renderWithQueryClient } from '@/test/render-with-query-client';
@@ -8,7 +8,10 @@ import { login } from '../api/login';
 import { SIGN_UP_MESSAGES } from '../utils/sign-up-validation';
 import { SignUpFlow } from './sign-up-flow';
 
-const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+const { push, revokeObjectURL } = vi.hoisted(() => ({
+  push: vi.fn(),
+  revokeObjectURL: vi.fn(),
+}));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push }),
@@ -47,7 +50,7 @@ function categorySelect() {
 }
 
 async function choosePhoto(url: string) {
-  vi.stubGlobal('URL', { createObjectURL: vi.fn(() => url) });
+  vi.stubGlobal('URL', { createObjectURL: vi.fn(() => url), revokeObjectURL });
   const file = new File(['png'], 'photo.png', { type: 'image/png' });
   fireEvent.change(screen.getByLabelText('프로필 사진'), { target: { files: [file] } });
   await waitFor(() => expect(screen.getByRole('img')).toHaveAttribute('src', url));
@@ -74,15 +77,20 @@ function expectNoValidationMessage() {
 }
 
 describe('SignUpFlow', () => {
+  let unmount: () => void;
+
   beforeEach(() => {
     resetAccounts();
     push.mockClear();
+    revokeObjectURL.mockClear();
     localStorage.clear();
     sessionStorage.clear();
-    renderWithQueryClient(<SignUpFlow />);
+    ({ unmount } = renderWithQueryClient(<SignUpFlow />));
   });
 
+  // 화면을 치울 때 사진 주소를 해제하므로, 주소 대역을 걷기 전에 먼저 치운다.
   afterEach(() => {
+    cleanup();
     vi.unstubAllGlobals();
   });
 
@@ -308,5 +316,75 @@ describe('SignUpFlow', () => {
 
     expect(await screen.findByText('회원가입이 성공적으로')).toBeVisible();
     expect(screen.getByText('완료되었습니다!')).toBeVisible();
+  });
+
+  it('사진을 바꾸면 앞서 고른 사진의 주소를 해제한다', async () => {
+    passCredentials();
+    await choosePhoto('blob:test/1');
+
+    await choosePhoto('blob:test/2');
+
+    expect(revokeObjectURL).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:test/1');
+  });
+
+  it('단계를 오가는 동안에는 고른 사진의 주소를 해제하지 않는다', async () => {
+    passCredentials();
+    await choosePhoto('blob:test/1');
+
+    click('이전');
+    click('다음');
+
+    expect(revokeObjectURL).not.toHaveBeenCalled();
+    expect(screen.getByRole('img')).toHaveAttribute('src', 'blob:test/1');
+  });
+
+  it('가입하지 않고 화면을 떠나면 고른 사진의 주소를 해제한다', async () => {
+    passCredentials();
+    await choosePhoto('blob:test/1');
+    await choosePhoto('blob:test/2');
+    await choosePhoto('blob:test/3');
+    click('이전');
+
+    unmount();
+
+    expect(revokeObjectURL.mock.calls).toEqual([['blob:test/1'], ['blob:test/2'], ['blob:test/3']]);
+  });
+
+  it('사진을 고르지 않고 화면을 떠나면 해제할 주소가 없다', () => {
+    vi.stubGlobal('URL', { revokeObjectURL });
+    passCredentials();
+
+    unmount();
+
+    expect(revokeObjectURL).not.toHaveBeenCalled();
+  });
+
+  it('가입한 계정에 담긴 사진의 주소는 화면을 떠나도 해제하지 않는다', async () => {
+    passCredentials();
+    fillProfile();
+    await choosePhoto('blob:test/1');
+    click('다음');
+    await screen.findByText('회원가입이 성공적으로');
+
+    unmount();
+
+    expect(revokeObjectURL).not.toHaveBeenCalled();
+    const { user } = await login({ loginId: 'cook02', password: 'password2' });
+    expect(user.profileImageUrl).toBe('blob:test/1');
+  });
+
+  it('아이디 중복으로 가입하지 못한 사진의 주소는 화면을 떠날 때 해제한다', async () => {
+    passCredentials('recipe01');
+    fillProfile();
+    await choosePhoto('blob:test/1');
+    click('다음');
+    await screen.findByText('이미 사용 중인 아이디입니다.');
+    expect(revokeObjectURL).not.toHaveBeenCalled();
+
+    unmount();
+
+    expect(revokeObjectURL).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:test/1');
   });
 });

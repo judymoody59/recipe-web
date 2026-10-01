@@ -109,6 +109,18 @@ test('고른 사진이 원을 채운다', async ({ page }) => {
 
   await expect(photo).not.toHaveAttribute('src', firstSrc);
   await expect(photo).toHaveAttribute('src', /^blob:/);
+  // 바꾸기 전 사진의 주소는 해제되어 더 읽히지 않고, 지금 사진의 주소는 읽힌다.
+  const readable = (url: string) =>
+    page.evaluate(
+      (target) =>
+        fetch(target).then(
+          () => true,
+          () => false,
+        ),
+      url,
+    );
+  expect(await readable(firstSrc)).toBe(false);
+  expect(await readable((await photo.getAttribute('src')) ?? '')).toBe(true);
 });
 
 test('선호 카테고리를 고르면 그 화면 글자가 보인다', async ({ page }) => {
